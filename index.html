@@ -93,7 +93,9 @@
     <button onclick="bookDriver()" id="bookBtn" data-i18n="book_now">Book Driver Now</button>
 
     <div class="contact">
-      <span data-i18n="or_call">Or call</span>: <a href="tel:+917845199014">+91 78451 99014</a>
+      <span data-i18n="or_call">Or call</span>: <a href="tel:+917810089014">+91 78451 99014</a>
+    </div>    <div style="text-align:center;font-size:12px;color:#666;margin-top:6px;">
+      ✉️ <a href="mailto:booking.driveease@gmail.com" style="color:#ff6b35;text-decoration:none;">booking.driveease@gmail.com</a>
     </div>
   </div>
 
@@ -102,7 +104,14 @@
     <p id="confirmMsg"></p>
     <div class="card" id="bookingCard"></div>
 
-    <div id="otpPanel" class="card" style="display:none;background:linear-gradient(135deg,#fff8f3,#ffe4cc);border-left-color:#ff6b35;text-align:center;margin-top:16px;">
+   
+    <div id="arrivalPanel" class="card" style="display:none;background:#fff8f3;border-left-color:#f59e0b;text-align:center;margin-top:16px;">
+      <div style="font-size:16px;font-weight:700;color:#f59e0b;margin-bottom:8px;">🚗 Your driver has arrived!</div>
+      <div style="font-size:13px;color:#666;margin-bottom:10px;">Board within:</div>
+      <div id="arrivalCountdown" style="font-size:42px;font-weight:900;color:#f59e0b;letter-spacing:4px;font-family:monospace;padding:16px;background:#fff;border-radius:12px;border:3px dashed #f59e0b;">15:00</div>
+      <div style="font-size:12px;color:#999;margin-top:8px;">If you don't board in 15 min, ride auto-starts.</div>
+    </div>
+ <div id="otpPanel" class="card" style="display:none;background:linear-gradient(135deg,#fff8f3,#ffe4cc);border-left-color:#ff6b35;text-align:center;margin-top:16px;">
       <div style="font-size:16px;font-weight:700;color:#ff6b35;margin-bottom:8px;" data-i18n="otp_title">🔐 Verification</div>
       <div style="font-size:13px;color:#666;margin-bottom:10px;" data-i18n="otp_instruction">Share this OTP with driver</div>
       <div id="otpDisplay" style="font-size:42px;font-weight:900;color:#ff6b35;letter-spacing:8px;font-family:monospace;padding:16px;background:#fff;border-radius:12px;border:3px dashed #ff6b35;">----</div>
@@ -202,7 +211,7 @@
 let lastBooking = null, selectedRating = 0;
 let customerMap = null, driverMarker = null, trackingInterval = null, trackingActive = false;
 let chatInterval = null, chatOpen = false;
-let statusInterval = null, otpCountdownInterval = null, timerInterval = null;
+let statusInterval = null, otpCountdownInterval = null, timerInterval = null, customerArrivalInterval = null;
 
 function updatePrice() {
   const svc = document.getElementById('service').value;
@@ -344,11 +353,21 @@ function updateCustomerView(b) {
     document.getElementById('chatPanel').style.display = 'none';
   }
 
+    if (b.status === 'ARRIVED') {
+    document.getElementById('arrivalPanel').style.display = 'block';
+    document.getElementById('otpPanel').style.display = 'none';
+    startArrivalCountdownCustomer(b.id, b.arrivalTime);
+  } else {
+    document.getElementById('arrivalPanel').style.display = 'none';
+    if (customerArrivalInterval) { clearInterval(customerArrivalInterval); customerArrivalInterval = null; }
+  }
+
   if (b.status === 'AWAITING_OTP') {
     showOTP(b.id);
   } else {
     document.getElementById('otpPanel').style.display = 'none';
-    if (otpCountdownInterval) { clearInterval(otpCountdownInterval); otpCountdownInterval = null; }
+    if (otpCountdownInterval) { clearInterval(otpCountdownInterval); otpCountdownInterval = null;
+}
   }
 
   if (b.status === 'IN_PROGRESS') {
@@ -394,6 +413,26 @@ async function showOTP(bookingId) {
     document.getElementById('otpDisplay').textContent = '----';
     document.getElementById('otpTimer').textContent = res.error || 'No OTP yet';
   }
+}
+
+function startArrivalCountdownCustomer(bookingId, arrivalTime) {
+  if (customerArrivalInterval) clearInterval(customerArrivalInterval);
+  const arrival = arrivalTime ? new Date(arrivalTime).getTime() : Date.now();
+  const update = () => {
+    const el = document.getElementById('arrivalCountdown');
+    if (!el) return;
+    const elapsed = Math.floor((Date.now() - arrival) / 1000);
+    const remaining = Math.max(0, 900 - elapsed);
+    const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+    const s = (remaining % 60).toString().padStart(2, '0');
+    el.textContent = `${m}:${s}`;
+    if (remaining <= 0) {
+      clearInterval(customerArrivalInterval);
+      customerArrivalInterval = null;
+    }
+  };
+  update();
+  customerArrivalInterval = setInterval(update, 1000);
 }
 
 function startOTPCountdown(seconds) {

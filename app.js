@@ -2,7 +2,7 @@
 // DRIVEEASE — CONFIGURATION
 // ================================================================
 const API_URL = 'https://script.google.com/macros/s/AKfycbxhFxAHZ-Cg5Lhmkr4ZfFjC0iBZfwEAEQixsFX-iOs3v-bi2BqZ6rpk1C1vFfkiFjcPMw/exec';
-const BUSINESS_PHONE = '917845199014';
+const BUSINESS_PHONE = '917810089014';
 const OWNER_UPI = 'chennaiactingdriver@ybl';
 const COMMISSION_RATE = 0.10;
 
