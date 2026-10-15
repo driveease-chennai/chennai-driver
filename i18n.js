@@ -1,7 +1,7 @@
 const TRANSLATIONS = {
   en: {
     app_title: "🚗 DriveEase", app_subtitle: "Verified drivers • Fixed rates • 24/7",
-    driver_dashboard: "🚙 DriveEase Driver", driver_subtitle: "Accept rides near you",
+    driver_dashboard: "✈️ DriveEase Pilot", driver_subtitle: "Accept rides near you",
     admin_dashboard: "📊 DriveEase Admin", admin_subtitle: "All bookings & revenue",
     your_name: "Your Name", your_name_required: "Your Name *", full_name: "Full name",
     phone: "Phone", phone_required: "Phone *", phone_placeholder: "10-digit mobile",
@@ -74,7 +74,7 @@ const TRANSLATIONS = {
   },
   ta: {
     app_title: "🚗 DriveEase", app_subtitle: "சரிபார்க்கப்பட்ட டிரைவர்கள் • நிலையான கட்டணம் • 24/7",
-    driver_dashboard: "🚙 DriveEase டிரைவர்", driver_subtitle: "அருகிலுள்ள சவாரிகளை ஏற்கவும்",
+    driver_dashboard: "✈️ DriveEase பைலட்", driver_subtitle: "அருகிலுள்ள சவாரிகளை ஏற்கவும்",
     admin_dashboard: "📊 DriveEase நிர்வாகம்", admin_subtitle: "அனைத்து முன்பதிவுகள் & வருவாய்",
     your_name: "உங்கள் பெயர்", your_name_required: "உங்கள் பெயர் *", full_name: "முழு பெயர்",
     phone: "தொலைபேசி", phone_required: "தொலைபேசி *", phone_placeholder: "10 இலக்க எண்",
@@ -106,7 +106,7 @@ const TRANSLATIONS = {
     job_accepted: "✅ வேலை ஏற்கப்பட்டது", ride_completed: "🎉 சவாரி முடிந்தது", job_returned: "வேலை திரும்பியது",
     pending: "நிலுவை", active: "செயலில்", completed: "முடிந்தது", revenue: "வருவாய்",
     all_bookings: "அனைத்து முன்பதிவுகள்", no_bookings: "முன்பதிவுகள் இல்லை.", driver_label: "டிரைவர்",
-    or_call: "அல்லது அழைக்கவும்", or: "அல்லது",
+    or_call: "அல்லது அழைக்கவும்", or: "அல்லது",, email_us: "மின்னஞ்சல்"
     fill_fields: "தேவையான புலங்களை நிரப்பவும்",
     booking_failed: "முன்பதிவு தோல்வி. அழைக்கவும்.",
     payment_noted: "✅ நன்றி!",
@@ -145,7 +145,7 @@ const TRANSLATIONS = {
   },
   tg: {
     app_title: "🚗 DriveEase", app_subtitle: "Nambikkaana drivers • Fixed rate • 24/7",
-    driver_dashboard: "🚙 DriveEase Driver", driver_subtitle: "Pakathula ride-a accept pannunga",
+    driver_dashboard: "✈️ DriveEase Pilot", driver_subtitle: "Pakathula ride-a accept pannunga",
     admin_dashboard: "📊 DriveEase Admin", admin_subtitle: "Ella booking-um revenue-um",
     your_name: "Unga Peru", your_name_required: "Unga Peru *", full_name: "Full name",
     phone: "Phone Number", phone_required: "Phone *", phone_placeholder: "10 digit",
@@ -177,7 +177,7 @@ const TRANSLATIONS = {
     job_accepted: "✅ Velai accept", ride_completed: "🎉 Ride mudinjuchu", job_returned: "Velai thirumbi",
     pending: "Niluvai", active: "Nadapula", completed: "Mudinjiduchu", revenue: "Varumaanam",
     all_bookings: "Ella Bookings", no_bookings: "Booking illa.", driver_label: "Driver",
-    or_call: "Illana call", or: "Illana",
+    or_call: "Illana call", or: "Illana","Email pannunga"
     fill_fields: "Ella field-um fill pannunga",
     booking_failed: "Booking fail. Direct-a call pannunga.",
     payment_noted: "✅ Nandri!",
