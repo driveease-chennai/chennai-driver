@@ -11,7 +11,17 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body><div id="splash" style="position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,#ff6b35,#f7931e);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s;">
+  <div style="font-size:80px;margin-bottom:20px;">🚗</div>
+  <div style="color:white;font-size:32px;font-weight:900;letter-spacing:2px;">DriveEase</div>
+  <div style="color:white;font-size:14px;margin-top:8px;opacity:0.9;">Chennai Acting Driver</div>
+</div>
+<script>
+  setTimeout(() => {
+    const splash = document.getElementById('splash');
+    if (splash) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); }
+  }, 1200);
+</script>
 <div class="container">
   <div id="formView">
     <h1 data-i18n="app_title">🚗 DriveEase</h1>
@@ -47,6 +57,15 @@
 
     <label data-i18n="drop_required">Drop Location *</label>
     <input type="text" id="drop" data-i18n-placeholder="drop_placeholder">
+ 
+    <label>Favorite Driver (optional)</label>
+    <input type="text" id="favoriteDriver" placeholder="e.g., Rajesh - 9876543210">
+
+    <label>Repeat Booking</label>
+    <select id="repeatOption">
+      <option value="no">One-time</option>
+      <option value="weekly">Weekly (same driver for 7 days)</option>
+    </select>
 
     <label data-i18n="service_required">Service Type *</label>
     <select id="service" onchange="updatePrice()">
@@ -295,6 +314,8 @@ async function bookDriver() {
   const fare = document.getElementById('priceValue').textContent;
   const datetime = document.getElementById('datetime').value;
   const car = document.getElementById('car').value.trim();
+  const favoriteDriver = document.getElementById('favoriteDriver')?.value.trim() || '';
+  const repeatOption = document.getElementById('repeatOption')?.value || 'no';
 
   if (!name || phone.length !== 10 || !pickupEl.value || !drop || !datetime) {
     showToast(t('fill_fields')); return;
@@ -305,10 +326,15 @@ async function bookDriver() {
 
   const btn = document.getElementById('bookBtn');
   btn.disabled = true; btn.textContent = t('booking');
-  lastBooking = { name, phone, email, pickup, drop, service, datetime, car, fare };
+  lastBooking = { name, phone, email, pickup, drop, service, datetime, car, fare, favoriteDriver, isWeekly: repeatOption === 'weekly', startDate: datetime };
 
   try {
-    const result = await createBooking(lastBooking);
+    let result;
+    if (lastBooking.isWeekly) {
+      result = await createWeeklyBooking(lastBooking);
+    } else {
+      result = await createBooking(lastBooking);
+    }
     if (result.ok) {
       lastBooking.id = result.id;
       document.getElementById('formView').style.display = 'none';
