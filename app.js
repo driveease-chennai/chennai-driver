@@ -242,3 +242,33 @@ async function markReached(id) {
 async function autoStartExpired() {
   return apiCall({ action: 'autoStartExpired' });
 }
+
+
+// ---------------- NEW FEATURES API ----------------
+async function manualBooking(booking) {
+  return apiCall({ action: 'manualBooking', ...booking });
+}
+
+async function searchBookings(query) {
+  return apiCall({ action: 'searchBookings', ...query });
+}
+
+async function getDriverLocations() {
+  return apiCall({ action: 'getDriverLocations' });
+}
+
+async function bulkWhatsApp() {
+  return apiCall({ action: 'bulkWhatsApp' });
+}
+
+async function createWeeklyBooking(booking) {
+  return apiCall({ action: 'createWeeklyBooking', ...booking });
+}
+
+async function getRatingFeedback() {
+  return apiCall({ action: 'getRatingFeedback' });
+}
+
+async function remindCustomer(id) {
+  return apiCall({ action: 'remindCustomer', id });
+}
