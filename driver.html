@@ -11,7 +11,17 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body><div id="splash" style="position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,#22c55e,#16a34a);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s;">
+  <div style="font-size:80px;margin-bottom:20px;">✈️</div>
+  <div style="color:white;font-size:32px;font-weight:900;letter-spacing:2px;">DriveEase Pilot</div>
+  <div style="color:white;font-size:14px;margin-top:8px;opacity:0.9;">Ready to fly</div>
+</div>
+<script>
+  setTimeout(() => {
+    const splash = document.getElementById('splash');
+    if (splash) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); }
+  }, 1200);
+</script>
 
 <!-- LOGIN VIEW -->
 <div class="container" id="loginView">
@@ -131,8 +141,8 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="i18n.js?v=51"></script>
-<script src="app.js?v=51"></script>
+<script src="i18n.js?v=110"></script>
+<script src="app.js?v=110"></script>
 <script>
 let allJobs = [], currentFilter = 'PENDING';
 let map = null, mapMarkers = [];
@@ -386,15 +396,18 @@ function renderJobs() {
     let actionButtons = '';
     if (j.status === 'PENDING') {
       actionButtons = `<div class="row"><button class="btn-green" onclick="acceptJob('${j.id}')">${t('accept')}</button></div>`;
-        } else if (j.status === 'ACCEPTED' && isMine) {
+            } else if (j.status === 'ACCEPTED' && isMine) {
       actionButtons = `
         <div class="row">
           <button class="btn-green" onclick="reachedHandler('${j.id}', '${j.phone}')">📍 I've Reached</button>
           <button class="btn-red" onclick="noShowHandler('${j.id}')">${t('no_show')}</button>
         </div>
         <div class="row">
-          <button class="btn-blue" onclick="toggleShareLocation('${j.id}', '${driverName}')" id="shareBtn_${j.id}">${t('share_location')}</button>
+          <button class="btn-blue" onclick="remindCustomerHandler('${j.id}')">🔔 Remind Customer</button>
           <button class="btn-blue" onclick="openChatDriver('${j.id}')">${t('chat')}</button>
+        </div>
+        <div class="row">
+          <button class="btn-blue" onclick="toggleShareLocation('${j.id}', '${driverName}')" id="shareBtn_${j.id}">${t('share_location')}</button>
         </div>`;
     } else if (j.status === 'ARRIVED' && isMine) {
       actionButtons = `
@@ -688,6 +701,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginView').style.display = 'block';
   }
 });
+async function remindCustomerHandler(id) {
+  const res = await remindCustomer(id);
+  if (res.ok) {
+    showToast('📍 Reminder sent to customer');
+  } else {
+    showToast('Failed to send reminder');
+  }
+}
 </script>
 </body>
 </html>

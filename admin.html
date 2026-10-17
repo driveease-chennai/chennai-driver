@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DriveEase Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -30,12 +31,59 @@
   <h3 style="margin-top:20px;">✅ Approved Drivers</h3>
   <div id="approvedDrivers"></div>
 
+    <h3 style="margin-top:20px;">📝 Manual Booking</h3>
+  <div id="manualBookingSection">
+    <button class="btn-blue" onclick="toggleManualBooking()">+ Add New Booking</button>
+    <div id="manualBookingForm" style="display:none;margin-top:10px;">
+      <label>Customer Name</label>
+      <input type="text" id="mbName" placeholder="Name">
+      <label>Phone</label>
+      <input type="tel" id="mbPhone" maxlength="10" placeholder="10-digit">
+      <label>Pickup</label>
+      <input type="text" id="mbPickup" placeholder="Pickup location">
+      <label>Drop</label>
+      <input type="text" id="mbDrop" placeholder="Drop location">
+      <label>Service</label>
+      <input type="text" id="mbService" placeholder="e.g., Hourly - 4 hours">
+      <label>Date & Time</label>
+      <input type="datetime-local" id="mbDatetime">
+      <label>Fare (₹)</label>
+      <input type="number" id="mbFare" placeholder="500">
+      <button class="btn-green" onclick="createManualBooking()">✅ Create Booking</button>
+    </div>
+  </div>
+
+  <h3 style="margin-top:20px;">🔍 Search & Filter</h3>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <input type="text" id="searchQuery" placeholder="Search by ID/name/phone" style="flex:1;min-width:150px;">
+    <select id="searchStatus" style="flex:0 0 auto;">
+      <option value="ALL">All Status</option>
+      <option value="PENDING">Pending</option>
+      <option value="ACCEPTED">Accepted</option>
+      <option value="ARRIVED">Arrived</option>
+      <option value="IN_PROGRESS">In Progress</option>
+      <option value="COMPLETED">Completed</option>
+    </select>
+    <button class="btn-blue" onclick="performSearch()" style="flex:0 0 auto;">🔍 Search</button>
+    <button class="btn-secondary" onclick="exportCSV()" style="flex:0 0 auto;">📥 Export CSV</button>
+  </div>
+
+  <h3 style="margin-top:20px;">📍 Live Driver Locations</h3>
+  <button class="btn-blue" onclick="loadDriverMap()">🗺️ Refresh Map</button>
+  <div id="driverLocationsMap" style="height:300px;border-radius:12px;margin-top:10px;display:none;"></div>
+
+  <h3 style="margin-top:20px;">📢 Bulk WhatsApp</h3>
+  <button class="btn-blue" onclick="openBulkWhatsApp()">📢 Send to All Drivers</button>
+
+  <h3 style="margin-top:20px;">⭐ Rating Feedback</h3>
+  <div id="ratingsList">Loading...</div>
+
   <h3 data-i18n="all_bookings" style="margin-top:20px;">All Bookings</h3>
   <div id="adminList"></div>
 </div>
 
-<script src="i18n.js?v=50"></script>
-<script src="app.js?v=50"></script>
+<script src="i18n.js?v=110"></script>
+<script src="app.js?v=110"></script>
 <script>
 async function loadAdmin() {
   document.getElementById('adminList').innerHTML = `<div class="spinner">${t('loading')}</div>`;
@@ -210,6 +258,143 @@ async function resolveComplaintHandler(complaintId) {
 
 loadAdmin();
 setInterval(loadAdmin, 60000);
+
+// ==================== NEW ADMIN FEATURES ====================
+
+let driverMapInstance = null;
+let driverMarkers = [];
+
+function toggleManualBooking() {
+  const form = document.getElementById('manualBookingForm');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+async function createManualBooking() {
+  const name = document.getElementById('mbName').value.trim();
+  const phone = document.getElementById('mbPhone').value.trim();
+  const pickup = document.getElementById('mbPickup').value.trim();
+  const drop = document.getElementById('mbDrop').value.trim();
+  const service = document.getElementById('mbService').value.trim();
+  const datetime = document.getElementById('mbDatetime').value;
+  const fare = document.getElementById('mbFare').value;
+  if (!name || phone.length !== 10 || !pickup || !drop || !datetime || !fare) {
+    showToast('Fill all fields'); return;
+  }
+  const res = await manualBooking({ name, phone, pickup, drop, service, datetime, fare });
+  if (res.ok) {
+    showToast('✅ Manual booking created: ' + res.id);
+    loadAdmin();
+    document.getElementById('manualBookingForm').style.display = 'none';
+  } else {
+    showToast('Failed');
+  }
+}
+
+async function performSearch() {
+  const query = document.getElementById('searchQuery').value.trim();
+  const status = document.getElementById('searchStatus').value;
+  const res = await searchBookings({ query, status });
+  if (!res.ok) { showToast('Search failed'); return; }
+  const bookings = res.bookings;
+  document.getElementById('adminList').innerHTML = bookings.length === 0
+    ? '<p style="text-align:center;color:#999;">No results</p>'
+    : bookings.map(b => `
+      <div class="card ${b.status.toLowerCase()}">
+        <span class="badge ${b.status.toLowerCase()}">${b.status}</span>
+        <strong style="margin-left:6px;">${b.id}</strong>
+        <div style="margin-top:8px;font-size:13px;">
+          ${b.name} • <a href="tel:${b.phone}">${b.phone}</a><br>
+          ${b.pickup} → ${b.drop}<br>
+          ${new Date(b.datetime).toLocaleString('en-IN')} • ₹${b.fare}<br>
+          Driver: ${b.driver || '—'}${b.rating ? ` • ⭐ ${b.rating}` : ''}
+        </div>
+      </div>`).join('');
+}
+
+function exportCSV() {
+  listBookings().then(bookings => {
+    const headers = ['Timestamp', 'ID', 'Name', 'Phone', 'Pickup', 'Drop', 'Service', 'DateTime', 'Status', 'Driver', 'Fare', 'Rating', 'Review'];
+    const csv = [headers.join(',')];
+    bookings.forEach(b => {
+      csv.push([
+        new Date(b.timestamp).toLocaleString('en-IN'),
+        b.id, b.name, b.phone, b.pickup, b.drop, b.service,
+        new Date(b.datetime).toLocaleString('en-IN'), b.status,
+        b.driver || '', b.fare, b.rating || '', (b.review || '').replace(/,/g, ';')
+      ].join(','));
+    });
+    const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'DriveEase-Bookings-' + new Date().toISOString().split('T')[0] + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('✅ CSV downloaded');
+  });
+}
+
+async function loadDriverMap() {
+  const mapEl = document.getElementById('driverLocationsMap');
+  mapEl.style.display = 'block';
+  if (!driverMapInstance) {
+    driverMapInstance = L.map('driverLocationsMap').setView([13.0827, 80.2707], 11);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '© OpenStreetMap'
+    }).addTo(driverMapInstance);
+  }
+  setTimeout(() => driverMapInstance.invalidateSize(), 100);
+  driverMarkers.forEach(m => driverMapInstance.removeLayer(m));
+  driverMarkers = [];
+  const res = await getDriverLocations();
+  if (!res.ok) return;
+  res.locations.forEach(loc => {
+    const marker = L.marker([loc.lat, loc.lng], {
+      icon: L.divIcon({
+        html: '<div style="background:#22c55e;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;border:3px solid #fff;">🚗</div>',
+        iconSize: [36, 36], iconAnchor: [18, 18], className: 'driver-marker'
+      })
+    }).addTo(driverMapInstance).bindPopup(`<b>${loc.driver}</b><br>Updated ${loc.age}s ago`);
+    driverMarkers.push(marker);
+  });
+  showToast(`📍 ${res.locations.length} drivers online`);
+}
+
+async function openBulkWhatsApp() {
+  const res = await bulkWhatsApp();
+  if (!res.ok || !res.phones || res.phones.length === 0) {
+    showToast('No approved drivers found'); return;
+  }
+  const message = prompt('Enter message for all drivers (' + res.phones.length + ' drivers):', 'Hi team! Ride available. Check DriveEase Pilot app.');
+  if (!message) return;
+  const encodedMsg = encodeURIComponent(message);
+  const phones = res.phones.join(',');
+  window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
+  showToast(`📢 ${res.phones.length} drivers — WhatsApp will open`);
+  res.phones.forEach(p => {
+    console.log('WhatsApp to:', p);
+  });
+}
+
+async function loadRatings() {
+  const res = await getRatingFeedback();
+  if (!res.ok || res.feedback.length === 0) {
+    document.getElementById('ratingsList').innerHTML = '<p style="color:#999;">No feedback yet.</p>';
+    return;
+  }
+  document.getElementById('ratingsList').innerHTML = res.feedback.map(f => `
+    <div class="card completed">
+      <div style="font-size:13px;">
+        <strong>${f.driver || '—'}</strong> • ⭐ ${f.rating || '—'}/5<br>
+        <em style="color:#666;">"${f.review || 'No comment'}"</em><br>
+        <span style="color:#999;font-size:11px;">${f.name} • ${new Date(f.timestamp).toLocaleDateString('en-IN')}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+setTimeout(loadRatings, 2000);
 </script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>
